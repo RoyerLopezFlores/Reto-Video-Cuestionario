@@ -41,10 +41,8 @@ export default function VideoComponent({video,
     const [estado,setEstado] = useState(0);
     const [tiempo,setTiempo] = useState(0);
 
-    useEffect(()=>{
-        setEstado(video?.status||0);
-    },[video])
-    useEffect(()=>{
+    
+    /*useEffect(()=>{
         let interval;
         if(estado === 2){
             interval = setInterval(()=>{
@@ -55,22 +53,8 @@ export default function VideoComponent({video,
             clearInterval(interval);
         }
         return ()=>{clearInterval(interval)};
-    },[estado]);
-    const changeStatus = (evt) =>{
-        evt.preventDefault();
-        
-        if(estado == 2){
-            const newVideo = {
-                pregunta:video.pregunta,
-                status:1
-            }
-            changeVideos(newVideo);
-        }
-        if(estado === 0)setEstado(2);
-        if(estado === 1) setEstado(0);
-        setTiempo(0);
-
-    }
+    },[estado]);*/
+    
     return (
     <>
         <div 
@@ -79,32 +63,15 @@ export default function VideoComponent({video,
             Volver
         </div>
         <Card sx={{width:'65%',margin:'0 auto'}}>
-            <div style={{position:'relative'}}>
+            
                 <div style={{
+                position:'relative',
                 width:'100%',
                 aspectRatio:'16/9',margin:'0 auto',
                 }}>
-                 <VideoManager/>   
+                 <VideoManager itemVideo={video} changeVideos={changeVideos}/>   
                 </div>
-                
-                <IconButton 
-                    style={buttonStyle}
-                    onClick={changeStatus}
-                    >
-                    {estado === 0? <PlayArrowIcon style={iconStyle} fontSize='large' 
-                       />:null}
-                    {estado === 1? <ReplayIcon style={iconStyle} fontSize='large' 
-                        />:null}
-                    {estado === 2? <StopIcon style={iconStyle} fontSize='large' 
-                        />:null}
-
-                </IconButton>
-                
-                {estado == 2? <div style={temporizadorStyle}>
-                    {tiempo}
-                    <VideocamIcon className='parpadeo' sx={{color:'red'}}/>
-                </div>:null}
-            </div>
+            
             <CardContent sx={{background:'#c4c4c4'}}>
              {video?.pregunta || "No hay pregunta disponible"}
             </CardContent>

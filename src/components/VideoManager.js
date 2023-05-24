@@ -6,6 +6,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
 import ReplayIcon from '@mui/icons-material/Replay';
 import VideocamIcon from '@mui/icons-material/Videocam';
+import Timer from './Timer';
 
 const mimeType = getSupportedMimeTypes()[1];
 const options = {mimeType};
@@ -36,30 +37,42 @@ const temporizadorStyle = {
     justifyContent:'space-between',
     fontSize:'0.9em'
 }
-export default function VideoManager({itemVideo,changeVideos}) {
+export default function VideoManager({itemVideo,
+    changeVideos,reiniciar,setReinicio}) {
     const video = useRef(null);
     const videoRepro = useRef(null);
     const [isMostrar,setIsMostrar] = useState(false);
-    const [iniciar,setIniciado] = useState(false);
+    const [enviar,setEnviar] = useState(false);
     const [estado,setEstado] = useState(0);
     const [tiempo,setTiempo] = useState(0);
     useEffect( ()=>{
-        console.log(video,videoRepro);
-        console.log(mimeType);
+        startVideo();
+        setEstado(itemVideo?.status||0);
+        
     },[]);
     useEffect(()=>{
-        setEstado(itemVideo?.status||0);
-    },[itemVideo])
-    const startVideo = async () =>{
-        
-        const curr = video.current;
-        
-        if(!iniciar){
-            const correct = await iniciarConfig(curr);
-            setIniciado(correct);
-            
+        if(enviar){
+            changeVideos({...itemVideo,status:1,data:recordedBlobs});
+            setEnviar(false);
         }
-        
+    },[enviar]);
+    useEffect(()=>{
+
+        if(itemVideo?.status == 1){
+            setEstado(1);
+            reproduccionDefault(itemVideo.data);
+        }
+    },[itemVideo]);
+    useEffect(()=>{
+        if(reiniciar){
+            pausarVideo();
+            setEstado(0);
+        }
+            
+    },[reiniciar])
+    const startVideo = async () =>{
+        const curr = video.current;
+        await iniciarConfig(curr);
         try{
             mediaRecorder = new MediaRecorder(window.stream, options);
             recordedBlobs = [];
@@ -70,6 +83,7 @@ export default function VideoManager({itemVideo,changeVideos}) {
         mediaRecorder.onstop = (evt) =>{
             console.log('Recorder stopped: ', evt);
             console.log('Recorded Blobs: ', recordedBlobs);
+            reproducirVideo(recordedBlobs);
         }
         mediaRecorder.ondataavailable = (evt) =>{
             console.log('handleDataAvailable', evt);
@@ -77,44 +91,65 @@ export default function VideoManager({itemVideo,changeVideos}) {
                 recordedBlobs.push(evt.data);
             }
         }
+    }
+    
+    const grabarVideo = () =>{
+        recordedBlobs = [];
         mediaRecorder.start();
-        curr.play();
         videoRepro.current.pause();
-
-        setIsMostrar(false);
-        console.log('MediaRecorder started', mediaRecorder);
+        videoRepro.current.style.display = 'none';
+        video.current.style.display = 'block';
         
     }
     const stopVideo = () =>{
         mediaRecorder.stop();
-        console.log("QUeee");
+        
     }
-    const reproducirVideo = () =>{
-        setIsMostrar(true);
-        const superBuffer = new Blob(recordedBlobs,{type: mimeType});
+    const pausarVideo  =() =>{
+        videoRepro.current.pause();
+        videoRepro.current.style.display = 'none';
+        video.current.style.display = 'block';
+
+    }
+    const reproduccionDefault = (blobs)=>{
+        const superBuffer = new Blob(blobs,{type: mimeType});
         const curr = videoRepro.current;
         curr.srcObject = null;
         curr.src = null;
         curr.src = URL.createObjectURL(superBuffer);
-        video.current.pause();
-        //curr.src = window.URL.createObjectURL(superBuffer);
-        //curr.play();
+        videoRepro.current.style.display = 'block';
+        video.current.style.display = 'none';
+    }
+    const reproducirVideo = (blobs) =>{
+        
+        const superBuffer = new Blob(blobs,{type: mimeType});
+        const curr = videoRepro.current;
+        curr.srcObject = null;
+        curr.src = null;
+        curr.src = URL.createObjectURL(superBuffer);
+        videoRepro.current.style.display = 'block';
+        video.current.style.display = 'none';
+        setEnviar(true);
     }
     const changeStatus = (evt) =>{
-        evt.preventDefault();
+        evt?.preventDefault();
         
         if(estado == 2){
-            const newVideo = {
-                pregunta:video.pregunta,
-                status:1
-            }
-            changeVideos(newVideo);
+            setReinicio(false);
+            stopVideo();
         }
-        if(estado === 0)setEstado(2);
-        if(estado === 1) setEstado(0);
+        if(estado === 0){
+            grabarVideo();
+            setEstado(2);
+        }
+        if(estado === 1) {
+            setEstado(0);
+            pausarVideo();
+        }
         setTiempo(0);
-
+        
     }
+    console.log(itemVideo,estado);
     return (
     <>
     
@@ -133,23 +168,22 @@ export default function VideoManager({itemVideo,changeVideos}) {
             {estado===0?<PlayArrowIcon style={iconStyle} fontSize='large'/>:null}
             {estado === 1? <ReplayIcon style={iconStyle} fontSize='large' />:null}
             {estado === 2? <StopIcon style={iconStyle} fontSize='large' />:null}
-
         </IconButton>
         {estado == 2? <div style={temporizadorStyle}>
-            {tiempo}
+            <Timer stopVideo={changeStatus}/>
             <VideocamIcon className='parpadeo' sx={{color:'red'}}/>
         </div>:null}
     
 
-    <div>
-        <button id="start" onClick={startVideo}>Start camera</button>
-        <button onClick={stopVideo}>Detener</button>
-        <button onClick={reproducirVideo}>Reproducir</button>
-        <button id="record" disabled>Start Recording</button>
-        <button id="play" disabled>Play</button>
-        <button id="download" disabled>Download</button>
-    </div>
+    
 
     </>
   )
 }
+/**
+ <div>
+        <button onClick={grabarVideo}>Start camera</button>
+        <button onClick={(evt)=>{evt.preventDefault(); stopVideo()}}>Detener</button>
+        <button onClick={(evt)=>{evt.preventDefault();reproducirVideo(recordedBlobs)}}>Reproducir</button>
+    </div>
+ */

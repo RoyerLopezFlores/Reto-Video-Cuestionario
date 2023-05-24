@@ -18,7 +18,7 @@ export default function Principal({videos,changePage,completo}) {
                 return <CardVideo key={"cv_"+i} 
                     changePage={changePage} 
                     index={i} pregunta={v.pregunta} 
-                    estado = {v.status}/>    
+                    estado = {v.status} video={v}/>    
             })
             }
         

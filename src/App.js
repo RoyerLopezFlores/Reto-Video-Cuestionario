@@ -7,7 +7,7 @@ import VideoComponent from './components/VideoComponent';
 import { getQuestions } from './res/Recursos';
 
 function App() {
-  const [showPrincipal, setShowPrincipal] = useState(false);
+  const [showPrincipal, setShowPrincipal] = useState(true);
   const [videos,setVideos] = useState([]);
   const [indexVideo,setIndexVideo] = useState(0);
   const [completo, setCompleto] = useState(false);
@@ -39,11 +39,13 @@ function App() {
     setIndexVideo((indexVideo-1 + videos.length)%(videos.length));
   }
   const changeVideos = (video) =>{
+    //console.log("Set Video",video);
+    //console.log("XDD", await extractVideoFrame(video.data,1));
     const newVideos = videos.map((ev,i)=>{
       if(indexVideo==i) return video;
       return ev;
     });
-
+    console.log("NV",newVideos);
     const completado = newVideos.reduce((prev,curr)=>{
       return prev & (curr.status == 1)
     },true)
@@ -51,6 +53,7 @@ function App() {
     setVideos(newVideos);
 
   }
+  
   return (
     <div className='ctn'>
       {showPrincipal?
@@ -70,6 +73,9 @@ function App() {
         completo = {completo}
 
       />}
+      <div>
+        
+      </div>
     </div>
     
   );
